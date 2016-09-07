@@ -18,7 +18,7 @@ module Finder
       # Search load path for matching patterns.
       #
       # @param [String] match
-      #   The file glob to match.
+      #   File glob to match against.
       #
       # @param [Hash] options
       #   Search options.
@@ -34,15 +34,25 @@ module Finder
           list = list.map{ |d| d.chomp('/') }
           found.concat(list)
         end
-        found.concat(data_path(match, options))
+        found.concat(find_data_path(match, options))
         found
+      end
+
+
+      #
+      # Search data path.
+      #
+      def data_path(match, options={})
+        return [] if options[:from]
+
+        Dir.glob(File.join(DATA_PATH, match)).uniq
       end
 
       #
       # Search load path for matching patterns.
       #
       # @param [String] match
-      #   The file glob to match.
+      #   File glob to match against.
       #
       # @param [Hash] options
       #   Search options.
@@ -69,15 +79,6 @@ module Finder
           found.concat(list)
         end
         found
-      end
-
-      #
-      # Search data path.
-      #
-      def data_path(match, options={})
-        return [] if options[:from]
-
-        Dir.glob(File.join(DATA_PATH, match)).uniq
       end
 
     end

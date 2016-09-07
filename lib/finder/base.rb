@@ -7,15 +7,16 @@ module Finder
     module Base
 
       #
-      # When included into a module, that module is atuomatically
+      # When included into a module, that module is automatically
       # self extended.
       #
       def self.included(mod)
         mod.extend(mod)
       end
 
+      ## @private
       ##
-      ## Like #load_path but searches only for requirable files.
+      ## Like #load_path but searches only for requirable files within a system.
       ##
       ## NOTE: This may be somewhat limited at the moment until we
       ## figure out how best to determine all possible extensions.

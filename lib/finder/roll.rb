@@ -10,7 +10,7 @@ module Finder
       # Search for current or latest files within a library.
       #
       # @param [String] match
-      #   The file glob to match.
+      #   File glob to match against.
       #
       # @param [Hash] options
       #   Search options.
@@ -47,6 +47,43 @@ module Finder
         matches
       end
 
+
+      #
+      # Search project's data paths.
+      #
+      def data_path(match, options={})
+        return [] unless defined?(::Library)
+
+        if from = options[:from]
+          ledger = { from.to_s => ::Library.ledger[from.to_s] }
+        else
+          ledger = ::Library.ledger
+        end
+
+        criteria = [options[:version]].compact
+        matches  = []
+
+        ledger.each do |name, lib|
+          list = []
+          if Array === lib
+            lib = lib.select do |l|
+              criteria.all? { |c| l.version.satisfy?(c) }
+            end
+            lib = lib.sort.first
+          else
+            next unless criteria.all? { |c| l.version.satisfy?(c) }
+          end
+          find = File.join(lib.location, 'data', match)
+          list = Dir.glob(find)
+          list = list.map { |d| d.chomp('/') }
+          matches.concat(list)
+          # activate the library if activate flag
+          lib.activate if options[:activate] && !list.empty?
+        end
+
+        matches
+      end
+
       #
       # Search Roll system for current or latest library files. This is useful
       # for plugin loading.
@@ -55,7 +92,7 @@ module Finder
       # of any given library.
       #
       # @param [String] match
-      #   The file glob to match.
+      #   File glob to match against.
       #
       # @param [Hash] options
       #   Search options.
@@ -112,50 +149,6 @@ module Finder
             end
             matches.concat(list)
           end
-          # activate the library if activate flag
-          lib.activate if options[:activate] && !list.empty?
-        end
-
-        matches
-      end
-
-      ## Search rolls for current or latest libraries.
-      ##
-      ##def load_path(match, options={})
-      #  return [] unless defined?(::Library)
-      #  #::Library.search_latest(match)
-      #  ::Library.find_files(match)
-      #end
-
-      #
-      # Search project's data paths.
-      #
-      def data_path(match, options={})
-        return [] unless defined?(::Library)
-
-        if from = options[:from]
-          ledger = {from.to_s => ::Library.ledger[from.to_s]}
-        else
-          ledger = ::Library.ledger
-        end
-
-        criteria = [options[:version]].compact
-        matches = []
-
-        ledger.each do |name, lib|
-          list = []
-          if Array === lib
-            lib = lib.select do |l|
-              criteria.all?{ |c| l.version.satisfy?(c) }
-            end
-            lib = lib.sort.first
-          else
-            next unless criteria.all?{ |c| l.version.satisfy?(c) }
-          end
-          find = File.join(lib.location, 'data', match)
-          list = Dir.glob(find)
-          list = list.map{ |d| d.chomp('/') }
-          matches.concat(list)
           # activate the library if activate flag
           lib.activate if options[:activate] && !list.empty?
         end

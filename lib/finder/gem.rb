@@ -6,11 +6,12 @@ module Finder
     module Gem
       include Base
 
+      # @private
       #
       # Search gems.
       #
       # @param [String] match
-      #   The file glob to match.
+      #   File glob to match against.
       #
       # @param [Hash] options
       #   Search options.
@@ -36,11 +37,39 @@ module Finder
         matches
       end
 
+
+      #
+      # Search gem data paths.
+      #
+      # @param [String] match
+      #   File glob to match against.
+      #
+      # @param [Hash] options
+      #   Search options.
+      #
+      # @return [Array<String>] List of absolute paths.
+      #
+      def data_path(match, options={})
+        specs = specifications(options)
+
+        matches = []
+        specs.each do |spec|
+          list = []
+          glob = File.join(spec.full_gem_path, 'data', match)
+          list = Dir[glob] #.map{ |f| f.untaint }
+          list = list.map { |d| d.chomp('/') }
+          matches.concat(list)
+          # activate the library if activate flag
+          spec.activate if options[:activate] && !list.empty?
+        end
+        matches
+      end
+
       #
       # Search gem load paths.
       #
       # @param [String] match
-      #   The file glob to match.
+      #   File glob to match against.
       #
       # @param [Hash] options
       #   Search options.
@@ -81,38 +110,11 @@ module Finder
         matches
       end
 
-      #
-      # Search gem data paths.
-      #
-      # @param [String] match
-      #   The file glob to match.
-      #
-      # @param [Hash] options
-      #   Search options.
-      #
-      # @return [Array<String>] List of absolute paths.
-      #
-      def data_path(match, options={})
-        specs = specifications(options)
-
-        matches = []
-        specs.each do |spec|
-          list = []
-          glob = File.join(spec.full_gem_path, 'data', match)
-          list = Dir[glob] #.map{ |f| f.untaint }
-          list = list.map{ |d| d.chomp('/') }
-          matches.concat(list)
-          # activate the library if activate flag
-          spec.activate if options[:activate] && !list.empty?
-        end
-        matches
-      end
-
     private
 
       #
       def specifications(options)
-        name = options[:from] || options[:gem]
+        name = options[:from]
         if name
           criteria = [options[:version]].compact
           begin
